@@ -16,15 +16,15 @@ const wishes: Wish[] = [
     author: "Denis",
   },
   {
-    message: "I'm Teddy",
+    message: "Hey Taha, it was such a pleasure working with you! Your subtle positive energy, your hard work and diligence will be greatly missed! I'm sure another interesting project is ahead of you. I wish you a lot of success and hopefully our paths will cross again 🙂 Thank you for everything, but mostly for putting up with my crazy questions and unpolished requirements!!!",
     author: "Teddy",
   },
   {
-    message: "I'm Ventsi",
+    message: "It’s been great working with you. Thank you.",
     author: "Ventsi",
   },
   {
-    message: "I'm Milenka",
+    message: "Thank you for all the mysterious investigations, years of great work and being such an awesome teamplayer!",
     author: "Milenka",
   },
   {
