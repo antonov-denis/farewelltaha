@@ -1,72 +1,88 @@
-// src/components/CardSlides.tsx
-import React, { useEffect, useState, useCallback } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import Card from "./Card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { loadItems } from "../lib/supabase";
 
 type Wish = {
   message: string;
   author: string;
 };
 
-const wishes: Wish[] = [
-  {
-    message:
-      "Taha, thank you for helping me from the very beginning - for everything you showed me, everything you taught me, and every piece of advice along the way. Your patience and kindness meant more than you know. I truly hope our paths cross again someday. Thank you, friend.",
-    author: "Denis",
-  },
-  {
-    message: "Hey Taha, it was such a pleasure working with you! Your subtle positive energy, your hard work and diligence will be greatly missed! I'm sure another interesting project is ahead of you. I wish you a lot of success and hopefully our paths will cross again 🙂 Thank you for everything, but mostly for putting up with my crazy questions and unpolished requirements!!!",
-    author: "Teddy",
-  },
-  {
-    message: "It’s been great working with you. Thank you.",
-    author: "Ventsi",
-  },
-  {
-    message: "Thank you for all the mysterious investigations, years of great work and being such an awesome teamplayer!",
-    author: "Milenka",
-  },
-  {
-    message: "I'm Spas",
-    author: "Spas",
-  },
-];
-
 const flipVariants = {
   enter: (direction: number) => ({
     opacity: 0,
     rotateY: direction > 0 ? 90 : -90,
     x: direction > 0 ? 40 : -40,
-    transition: { duration: 0.35 }, // removed ease
+    transition: { duration: 0.35 },
   }),
   center: {
     opacity: 1,
     rotateY: 0,
     x: 0,
-    transition: { duration: 0.4 }, // removed ease
+    transition: { duration: 0.4 },
   },
   exit: (direction: number) => ({
     opacity: 0,
     rotateY: direction > 0 ? -90 : 90,
     x: direction > 0 ? -40 : 40,
-    transition: { duration: 0.35 }, // removed ease
+    transition: { duration: 0.35 },
   }),
 };
 
 const CardSlides: React.FC = () => {
+  const [wishes, setWishes] = useState<Wish[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(0);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        setLoading(true);
+        setLoadError(null);
+
+        const rows = await loadItems();
+        const mapped: Wish[] = (rows ?? [])
+          .filter((r: any) => r?.value && r?.author)
+          .map((r: any) => ({ message: r.value, author: r.author }));
+
+        if (!cancelled) {
+          setWishes(mapped);
+          setIndex(0);
+        }
+      } catch (e: any) {
+        if (!cancelled) setLoadError(e?.message ?? "Failed to load wishes");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const total = wishes.length;
+
+  useEffect(() => {
+    if (total === 0) return;
+    if (index >= total) setIndex(0);
+  }, [total, index]);
 
   const goTo = useCallback(
     (nextIndex: number, dir: number) => {
-      if (nextIndex < 0) {
-        nextIndex = total - 1;
-      } else if (nextIndex >= total) {
-        nextIndex = 0;
-      }
+      if (total === 0) return;
+
+      if (nextIndex < 0) nextIndex = total - 1;
+      else if (nextIndex >= total) nextIndex = 0;
+
       setDirection(dir);
       setIndex(nextIndex);
     },
@@ -76,8 +92,9 @@ const CardSlides: React.FC = () => {
   const goNext = useCallback(() => goTo(index + 1, 1), [index, goTo]);
   const goPrev = useCallback(() => goTo(index - 1, -1), [index, goTo]);
 
-  // keyboard navigation
   useEffect(() => {
+    if (total === 0) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") {
         e.preventDefault();
@@ -90,9 +107,11 @@ const CardSlides: React.FC = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [goNext, goPrev]);
+  }, [goNext, goPrev, total]);
 
-  const currentWish = wishes[index];
+  const currentWish = useMemo(() => wishes[index], [wishes, index]);
+
+  if (loading || loadError || total === 0) return null;
 
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center bg-[#fcd0b1] px-4">
