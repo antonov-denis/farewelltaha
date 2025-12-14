@@ -138,7 +138,7 @@ const CardSlides: React.FC = () => {
 
         {/* Slide area */}
         <div
-          className="relative flex-1 min-h-[220px] sm:min-h-[260px] flex items-center justify-center"
+          className="relative flex-1 min-h-80 flex items-center justify-center"
           style={{ perspective: 1000 }}
         >
           <AnimatePresence mode="wait" custom={direction}>
